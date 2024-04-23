@@ -1,21 +1,12 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const {
-  validateEmail,
-  validatePassword,
-  validateUsername,
-} = require("./validators");
+const { validateEmail, validatePassword } = require("./validators");
 
 exports.register = async (req, res) => {
   try {
     // Extract user data from request body
-    const { username, email, password } = req.body;
-
-    // Validate username
-    if (!validateUsername(username)) {
-      return res.status(400).json({ message: "Invalid username" });
-    }
+    const { name, lastname, email, password } = req.body;
 
     // Validate email
     if (!validateEmail(email)) {
@@ -32,7 +23,8 @@ exports.register = async (req, res) => {
 
     // Create a new user
     const newUser = new User({
-      username,
+      name: name || "",
+      lastname: lastname || "",
       email,
       password: hashedPassword,
     });

@@ -1,8 +1,3 @@
-const validateUsername = (username) => {
-  // Username must not be empty and should be between 3 and 20 characters
-  return username && username.length >= 3 && username.length <= 20;
-};
-
 const validateEmail = (email) => {
   // Regular expression to validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -14,4 +9,4 @@ const validatePassword = (password) => {
   return password && password.length >= 8;
 };
 
-module.exports = { validateUsername, validateEmail, validatePassword };
+module.exports = { validateEmail, validatePassword };
