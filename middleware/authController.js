@@ -84,7 +84,7 @@ exports.login = async (req, res) => {
 
     // Return token and user details
     res.status(200).json({
-      accessToken,
+      token: accessToken,
       user: {
         _id: user._id,
         username: user.username,
