@@ -1,7 +1,11 @@
 const User = require("../models/User");
-const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const {
+  generateAccessToken,
+  generateRefreshToken,
+} = require("../helpers/tokenHelpers");
 const { validateEmail, validatePassword } = require("./validators");
+const RefreshToken = require("../models/RefreshToken");
 
 exports.register = async (req, res) => {
   try {
@@ -58,15 +62,29 @@ exports.login = async (req, res) => {
     }
 
     // Generate JWT token
-    const token = jwt.sign(
-      { userId: user._id, username: user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+    const accessToken = generateAccessToken(user._id, user.email);
+
+    // Generate Refresh JWT token/ check if token already exists
+    const existingRefreshTokenEntry = await RefreshToken.findOne({
+      userId: user._id,
+    });
+
+    if (existingRefreshTokenEntry) {
+      // If a refresh token already exists, update it
+      existingRefreshTokenEntry.refreshToken = generateRefreshToken();
+      await existingRefreshTokenEntry.save();
+    } else {
+      // If no refresh token exists, create a new one
+      const refreshTokenEntry = new RefreshToken({
+        userId: user._id,
+        refreshToken: generateRefreshToken(),
+      });
+      await refreshTokenEntry.save();
+    }
 
     // Return token and user details
     res.status(200).json({
-      token,
+      accessToken,
       user: {
         _id: user._id,
         username: user.username,
