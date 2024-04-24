@@ -15,14 +15,8 @@ async function verifyToken(req, res, next) {
   jwt.verify(token, process.env.JWT_SECRET, async function (err, decoded) {
     if (err) {
       // Token verification failed
-      return res.status(401).json({ message: "Invalid token" });
-    } else {
-      // Token is valid, save decoded token data to request for future use
-      req.user = decoded;
-
-      // Check if a new access token has already been generated
-      if (!req.newAccessToken) {
-        // Check if refresh token exists in the database
+      if (err.name === "TokenExpiredError") {
+        // If token is expired, check if refresh token exists
         try {
           const refreshTokenEntry = await RefreshToken.findOne({
             userId: decoded.userId,
@@ -39,8 +33,13 @@ async function verifyToken(req, res, next) {
           console.error("Error checking refresh token:", error);
         }
       }
+      return res.status(401).json({ message: "Invalid token" });
+    } else {
+      // Token is valid, save decoded token data to request for future use
+      req.user = decoded;
 
-      next(); // Proceed to next middleware or route handler
+      // New access token has been generated, continue with it
+      next();
     }
   });
 }
