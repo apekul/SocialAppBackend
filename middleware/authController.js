@@ -1,9 +1,6 @@
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
-const {
-  generateAccessToken,
-  generateRefreshToken,
-} = require("../helpers/tokenHelpers");
+const jwt = require("jsonwebtoken");
 const { validateEmail, validatePassword } = require("./validators");
 const RefreshToken = require("../models/RefreshToken");
 
@@ -47,56 +44,93 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // find if email exists
-    const user = await User.findOne({ email: email });
-
-    // If user is not found, return error
-    if (!user) {
-      return res.status(401).json({ message: "Invalid username or email" });
+    // check if email and password are not empty
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ error: "Email and password are required." });
     }
+    // Get user from db that match provided email, return error if user with email dont exists
+    const user = await User.findOne({ email });
+    !user && res.status(401).json({ message: "Invalid email" });
 
-    // Verify password
+    // Compare password and return error if dont match
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
       return res.status(401).json({ message: "Invalid password" });
     }
+    // !passwordMatch && res.status(401).json({ message: "Invalid password" });
 
-    // Generate JWT token
-    const accessToken = generateAccessToken(user._id, user.email);
+    // get user info
+    const { _id, name, lastname } = user;
 
-    // Generate Refresh JWT token/ check if token already exists
-    const existingRefreshTokenEntry = await RefreshToken.findOne({
-      userId: user._id,
+    // generate tokens
+    const accessToken = jwt.sign(
+      { email, _id, name, lastname },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
+    const newRefreshToken = jwt.sign(
+      { email, _id, name, lastname },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "30d",
+      }
+    );
+    // Check if refresh token exist in db
+    const existingRefreshToken = await RefreshToken.findOne({
+      userId: _id,
     });
-
-    if (existingRefreshTokenEntry) {
+    if (existingRefreshToken) {
       // If a refresh token already exists, update it
-      existingRefreshTokenEntry.refreshToken = generateRefreshToken();
-      await existingRefreshTokenEntry.save();
+      existingRefreshToken.refreshToken = newRefreshToken;
+      await existingRefreshToken.save();
     } else {
       // If no refresh token exists, create a new one
       const refreshTokenEntry = new RefreshToken({
         userId: user._id,
-        refreshToken: generateRefreshToken(),
+        refreshToken: newRefreshToken,
       });
       await refreshTokenEntry.save();
     }
 
-    // Return token and user details
-    res.status(200).json({
-      token: accessToken,
-      user: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-      },
+    // return to user tokens and redirectUrl
+    return res.status(200).json({
+      accessToken,
+      refreshToken: newRefreshToken,
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
+    return res.redirect("/");
   }
 };
 
 exports.logout = async (req, res) => {
   // Implement logout logic here
   res.status(201).json({ message: "User logout successfully" });
+};
+
+// refresh access token
+exports.refresh = async (req, res) => {
+  const refreshToken = req.body.refreshToken;
+  !refreshToken && res.status(401).json({ error: "Invalid refresh token" });
+  try {
+    // Verify refresh token
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+    // get decoded values
+    const { email, _id, name, lastname } = decoded;
+    // generate new access token
+    const newAccessToken = jwt.sign(
+      { email, _id, name, lastname },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
+    return res.status(200).json({ accessToken: newAccessToken });
+  } catch (error) {
+    res.status(403).json({ message: "Invalid refresh token." });
+  }
 };

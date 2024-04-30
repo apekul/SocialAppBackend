@@ -1,18 +1,17 @@
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
 
 // Function to generate a new access token
-function generateAccessToken(userId, username) {
-  return jwt.sign(
-    { userId, username },
-    process.env.JWT_SECRET,
-    { expiresIn: "15m" } // Example expiry time, adjust as needed
-  );
+function generateAccessToken(email) {
+  return jwt.sign({ email }, process.env.JWT_SECRET, {
+    expiresIn: "1h",
+  });
 }
 
 // Function to generate a refresh token
-function generateRefreshToken() {
-  return crypto.randomBytes(64).toString("hex");
+function generateRefreshToken(email) {
+  return jwt.sign({ email }, process.env.JWT_SECRET, {
+    expiresIn: "30d",
+  });
 }
 
 module.exports = { generateAccessToken, generateRefreshToken };

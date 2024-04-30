@@ -4,12 +4,12 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 // Import routes
 const authRouter = require("./routes/authRoutes");
-const indexRouter = require("./routes/index");
-
+const sampleRoute = require("./routes/sampleRoute");
 const app = express();
 
 // Enable CORS for all routes
@@ -33,9 +33,9 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 // Routes
-app.use("/", indexRouter);
 
-// Authentication routes
+// Auth routes and refresh access token
+app.use("/", sampleRoute);
 app.use("/auth", authRouter);
 
 module.exports = app;
