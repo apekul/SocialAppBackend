@@ -4,11 +4,11 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 const mongoose = require("mongoose");
-const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 // Import routes
 const authRouter = require("./routes/authRoutes");
+const postRouter = require("./routes/postRoutes");
 const sampleRoute = require("./routes/sampleRoute");
 const app = express();
 
@@ -37,5 +37,6 @@ app.use(express.static(path.join(__dirname, "public")));
 // Auth routes and refresh access token
 app.use("/", sampleRoute);
 app.use("/auth", authRouter);
+app.use("/post", postRouter);
 
 module.exports = app;
