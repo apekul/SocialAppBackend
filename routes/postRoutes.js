@@ -1,19 +1,35 @@
 const express = require("express");
 const router = express.Router();
 const postController = require("../middleware/postController");
+const validators = require("../middleware/validators");
 
 // Get all Posts
 router.get("/allPosts", postController.allPosts);
 // Get all posts created by User ID
-router.get("/byUser/:userId", postController.getPostsByUser);
+router.get(
+  "/byUser/:userId",
+  validators.verifyToken,
+  postController.getPostsByUser
+);
 // Get all posts that user ID commented on
-router.get("/commentedBy/:userId", postController.getPostsCommentedByUser);
+router.get(
+  "/commentedBy/:userId",
+  validators.verifyToken,
+  postController.getPostsCommentedByUser
+);
 // Get Comments for a post by its ID
-router.get("/:postId/comments", postController.getCommentsForPost);
-
+router.get(
+  "/:postId/comments",
+  validators.verifyToken,
+  postController.getCommentsForPost
+);
 // Create post
-router.post("/createPost", postController.createPost);
+router.post("/createPost", validators.verifyToken, postController.createPost);
 // Create comment with post ID
-router.post("/:postId/createCommment", postController.createCommment);
+router.post(
+  "/:postId/createCommment",
+  validators.verifyToken,
+  postController.createCommment
+);
 
 module.exports = router;

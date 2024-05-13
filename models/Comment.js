@@ -11,11 +11,15 @@ const commentSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
+  parentCommentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Comment",
+  },
   timestamp: {
     type: Date,
     default: Date.now,
   },
-  text: { type: String },
+  text: { type: String, required: true },
 });
 
 const Comment = mongoose.model("Comment", commentSchema);
