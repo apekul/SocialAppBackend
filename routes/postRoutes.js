@@ -4,7 +4,7 @@ const postController = require("../middleware/postController");
 const validators = require("../middleware/validators");
 
 // Get all Posts
-router.get("/allPosts", postController.allPosts);
+router.get("/allPosts", validators.verifyToken, postController.allPosts);
 // Get all posts created by User ID
 router.get(
   "/byUser/:userId",

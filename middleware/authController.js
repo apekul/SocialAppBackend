@@ -3,6 +3,10 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { validateEmail, validatePassword } = require("./validators");
 const RefreshToken = require("../models/RefreshToken");
+const {
+  generateAccessToken,
+  generateRefreshToken,
+} = require("../helpers/tokenHelpers");
 
 exports.register = async (req, res) => {
   try {
@@ -65,20 +69,9 @@ exports.login = async (req, res) => {
     const { _id, name, lastname } = user;
 
     // generate tokens
-    const accessToken = jwt.sign(
-      { email, _id, name, lastname },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
-      }
-    );
-    const newRefreshToken = jwt.sign(
-      { email, _id, name, lastname },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "30d",
-      }
-    );
+    const accessToken = generateAccessToken(email, _id, name, lastname);
+    const newRefreshToken = generateRefreshToken(email, _id, name, lastname);
+
     // Check if refresh token exist in db
     const existingRefreshToken = await RefreshToken.findOne({
       userId: _id,
@@ -122,13 +115,8 @@ exports.refresh = async (req, res) => {
     // get decoded values
     const { email, _id, name, lastname } = decoded;
     // generate new access token
-    const newAccessToken = jwt.sign(
-      { email, _id, name, lastname },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
-      }
-    );
+    const newAccessToken = generateAccessToken(email, _id, name, lastname);
+
     return res.status(200).json({ accessToken: newAccessToken });
   } catch (error) {
     res.status(403).json({ message: "Invalid refresh token." });

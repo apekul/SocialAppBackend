@@ -29,20 +29,21 @@ exports.getCommentsForPost = async (req, res) => {
 
 // Create Post
 exports.createPost = async (req, res) => {
-  const { text } = req.body;
+  const { text, images } = req.body;
   const accessToken = req.headers["authorization"];
 
   try {
     const decodedToken = jwt.decode(accessToken);
     const userId = decodedToken._id;
 
-    if (!text) {
+    if (!text && !images) {
       return res.status(400).json({ error: "Text field is required." });
     }
 
     const post = new Post({
       userId: userId,
       text: text,
+      images: [],
     });
     await post.save();
     res.status(201).json({ message: "Post created successfully" });
